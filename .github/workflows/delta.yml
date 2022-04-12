@@ -1,0 +1,110 @@
+name: delta
+'on':
+  - push
+jobs:
+  build-common:
+    name: build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download delta-0.12.1-x86_64-unknown-linux-gnu.tar.gz
+        run: >-
+          curl -LjO 
+          https://github.com/dandavison/delta/releases/download/0.12.1/delta-0.12.1-x86_64-unknown-linux-gnu.tar.gz
+      - name: Download delta-0.12.1-x86_64-apple-darwin.tar.gz
+        run: >-
+          curl -LjO 
+          https://github.com/dandavison/delta/releases/download/0.12.1/delta-0.12.1-x86_64-apple-darwin.tar.gz
+      - name: Download delta-0.12.1-x86_64-pc-windows-msvc.zip
+        run: >-
+          curl -LjO 
+          https://github.com/dandavison/delta/releases/download/0.12.1/delta-0.12.1-x86_64-pc-windows-msvc.zip
+      - name: ls
+        run: ls -alh
+      - name: Upload delta-0.12.1-x86_64-unknown-linux-gnu.tar.gz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: delta-0.12.1-x86_64-unknown-linux-gnu.tar.gz
+          asset_name: delta-0.12.1-x86_64-unknown-linux-gnu.tar.gz
+          tag: delta
+          overwrite: true
+      - name: Upload delta-0.12.1-x86_64-apple-darwin.tar.gz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: delta-0.12.1-x86_64-apple-darwin.tar.gz
+          asset_name: delta-0.12.1-x86_64-apple-darwin.tar.gz
+          tag: delta
+          overwrite: true
+      - name: Upload delta-0.12.1-x86_64-pc-windows-msvc.zip
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: delta-0.12.1-x86_64-pc-windows-msvc.zip
+          asset_name: delta-0.12.1-x86_64-pc-windows-msvc.zip
+          tag: delta
+          overwrite: true
+  test-on-windows-amd64:
+    name: test-on-windows-amd64
+    needs:
+      - build-common
+    runs-on: windows-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download delta-windows.zip
+        run: >-
+          curl -Ljo delta-windows.zip
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/delta/delta-0.12.1-x86_64-pc-windows-msvc.zip
+      - name: unzip
+        run: >-
+          Expand-Archive -Path delta-windows.zip && ls && mv
+          delta-windows/delta-0.12.1-x86_64-pc-windows-msvc/* ./ && ls
+      - name: clean
+        run: rm delta-windows.zip && rm -r delta-windows
+      - name: test-help
+        run: >-
+          if (.\delta.exe --help | Select-String "A viewer for git and diff
+          output")  { echo "ok" } else { Write-Error "test-failed" }
+  test-on-linux-amd64:
+    name: test-on-linux-amd64
+    needs:
+      - build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download delta-linux.tar.gz
+        run: >-
+          curl -Ljo delta-linux.tar.gz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/delta/delta-0.12.1-x86_64-unknown-linux-gnu.tar.gz
+      - name: unzip
+        run: >-
+          tar zxvf delta-linux.tar.gz && ls && mv
+          delta-0.12.1-x86_64-unknown-linux-gnu/* ./ && ls
+      - name: clean
+        run: rm delta-linux.tar.gz && rm -r delta-0.12.1-x86_64-unknown-linux-gnu
+      - name: test-help
+        run: ./delta --help | grep "A viewer for git and diff output"
+  test-on-macos-amd64:
+    name: test-on-macos-amd64
+    needs:
+      - build-common
+    runs-on: macos-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download delta-macos.tar.gz
+        run: >-
+          curl -Ljo delta-macos.tar.gz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/delta/delta-0.12.1-x86_64-apple-darwin.tar.gz
+      - name: unzip
+        run: >-
+          tar zxvf delta-macos.tar.gz && ls && mv
+          delta-0.12.1-x86_64-apple-darwin/* ./ && ls
+      - name: clean
+        run: rm delta-macos.tar.gz && rm -r delta-0.12.1-x86_64-apple-darwin
+      - name: test-help
+        run: ./delta --help | grep "A viewer for git and diff output"
