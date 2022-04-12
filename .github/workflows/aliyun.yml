@@ -1,0 +1,127 @@
+name: aliyun
+'on':
+  - push
+jobs:
+  build-common:
+    name: build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download aliyun-cli-linux-3.0.115-amd64.tgz
+        run: >-
+          curl -Ljo aliyun-cli-linux-3.0.115-amd64.tgz
+          https://github.com/aliyun/aliyun-cli/releases/download/v3.0.115/aliyun-cli-linux-3.0.115-amd64.tgz
+      - name: sha256 aliyun-cli-linux-3.0.115-amd64.tgz
+        run: >-
+          openssl sha256 aliyun-cli-linux-3.0.115-amd64.tgz | grep
+          a318e096d4fdf9efa3eba86cee784114a5b06e7a35861459ed20e369d9f3bf7c
+      - name: Download aliyun-cli-macosx-3.0.115-amd64.tgz
+        run: >-
+          curl -LjO 
+          https://github.com/aliyun/aliyun-cli/releases/download/v3.0.115/aliyun-cli-macosx-3.0.115-amd64.tgz
+      - name: Download aliyun-cli-windows-3.0.115-amd64.zip
+        run: >-
+          curl -LjO 
+          https://github.com/aliyun/aliyun-cli/releases/download/v3.0.115/aliyun-cli-windows-3.0.115-amd64.zip
+      - name: sha256 aliyun-cli-windows-3.0.115-amd64.zip
+        run: >-
+          openssl sha256 aliyun-cli-windows-3.0.115-amd64.zip | grep
+          2afb26b6e817f4c285cae7bf9af2090dfa90d5a9bdd9240fff0f58570b617b7f
+      - name: ls
+        run: ls -alh
+      - name: Upload aliyun-cli-linux-3.0.115-amd64.tgz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: aliyun-cli-linux-3.0.115-amd64.tgz
+          asset_name: aliyun-cli-linux-3.0.115-amd64.tgz
+          tag: aliyun
+          overwrite: true
+      - name: Upload aliyun-cli-macosx-3.0.115-amd64.tgz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: aliyun-cli-macosx-3.0.115-amd64.tgz
+          asset_name: aliyun-cli-macosx-3.0.115-amd64.tgz
+          tag: aliyun
+          overwrite: true
+      - name: Upload aliyun-cli-windows-3.0.115-amd64.zip
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: aliyun-cli-windows-3.0.115-amd64.zip
+          asset_name: aliyun-cli-windows-3.0.115-amd64.zip
+          tag: aliyun
+          overwrite: true
+  test-on-windows-amd64:
+    name: test-on-windows-amd64
+    needs:
+      - build-common
+    runs-on: windows-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download aliyun-windows.zip
+        run: >-
+          curl -Ljo aliyun-windows.zip
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/aliyun/aliyun-cli-windows-3.0.115-amd64.zip
+      - name: sha256 aliyun-windows.zip
+        run: >-
+          if ((Get-FileHash aliyun-windows.zip).Hash -eq
+          "2afb26b6e817f4c285cae7bf9af2090dfa90d5a9bdd9240fff0f58570b617b7f") {
+          echo "OK"} else { Write-Error "hash-failed"}
+      - name: unzip
+        run: >-
+          Expand-Archive -Path aliyun-windows.zip && mv aliyun-windows/* ./ &&
+          ls
+      - name: clean
+        run: rm aliyun-windows.zip && rm -r aliyun-windows
+      - name: test-help
+        run: >-
+          if (.\aliyun.exe --help | Select-String "Alibaba Cloud Command Line
+          Interface Version")  { echo "ok" } else { Write-Error "test-failed" }
+  test-on-linux-amd64:
+    name: test-on-linux-amd64
+    needs:
+      - build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download aliyun-linux.tgz
+        run: >-
+          curl -Ljo aliyun-linux.tgz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/aliyun/aliyun-cli-linux-3.0.115-amd64.tgz
+      - name: sha256 aliyun-linux.tgz
+        run: >-
+          openssl sha256 aliyun-linux.tgz | grep
+          a318e096d4fdf9efa3eba86cee784114a5b06e7a35861459ed20e369d9f3bf7c
+      - name: unzip
+        run: tar zxvf aliyun-linux.tgz && ls
+      - name: clean
+        run: rm aliyun-linux.tgz
+      - name: test-help
+        run: ./aliyun --help | grep "Alibaba Cloud Command Line Interface Version"
+  test-on-macos-amd64:
+    name: test-on-macos-amd64
+    needs:
+      - build-common
+    runs-on: macos-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download aliyun-macos.tgz
+        run: >-
+          curl -Ljo aliyun-macos.tgz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/aliyun/aliyun-cli-macosx-3.0.115-amd64.tgz
+      - name: sha256 aliyun-macos.tgz
+        run: >-
+          openssl sha256 aliyun-macos.tgz | grep
+          566d3593e0011b0fd48a8f4f27f8c7154369b7aaccd8a05bb114b8fa7eb53cc6
+      - name: unzip
+        run: tar zxvf aliyun-macos.tgz && ls
+      - name: clean
+        run: rm aliyun-macos.tgz
+      - name: test-help
+        run: ./aliyun --help | grep "Alibaba Cloud Command Line Interface Version"
