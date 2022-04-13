@@ -1,0 +1,108 @@
+name: cloak
+'on':
+  - push
+jobs:
+  build-common:
+    name: build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download cloak-v0.2.0-x86_64-unknown-linux-gnu.tar.gz
+        run: >-
+          curl -LjO 
+          https://github.com/evansmurithi/cloak/releases/download/v0.2.0/cloak-v0.2.0-x86_64-unknown-linux-gnu.tar.gz
+      - name: Download cloak-v0.2.0-x86_64-pc-windows-msvc.zip
+        run: >-
+          curl -LjO 
+          https://github.com/evansmurithi/cloak/releases/download/v0.2.0/cloak-v0.2.0-x86_64-pc-windows-msvc.zip
+      - name: Download cloak-v0.2.0-x86_64-apple-darwin.tar.gz
+        run: >-
+          curl -LjO 
+          https://github.com/evansmurithi/cloak/releases/download/v0.2.0/cloak-v0.2.0-x86_64-apple-darwin.tar.gz
+      - name: ls
+        run: ls -alh
+      - name: Upload cloak-v0.2.0-x86_64-unknown-linux-gnu.tar.gz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: cloak-v0.2.0-x86_64-unknown-linux-gnu.tar.gz
+          asset_name: cloak-v0.2.0-x86_64-unknown-linux-gnu.tar.gz
+          tag: cloak
+          overwrite: true
+      - name: Upload cloak-v0.2.0-x86_64-pc-windows-msvc.zip
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: cloak-v0.2.0-x86_64-pc-windows-msvc.zip
+          asset_name: cloak-v0.2.0-x86_64-pc-windows-msvc.zip
+          tag: cloak
+          overwrite: true
+      - name: Upload cloak-v0.2.0-x86_64-apple-darwin.tar.gz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: cloak-v0.2.0-x86_64-apple-darwin.tar.gz
+          asset_name: cloak-v0.2.0-x86_64-apple-darwin.tar.gz
+          tag: cloak
+          overwrite: true
+  test-on-windows-amd64:
+    name: test-on-windows-amd64
+    needs:
+      - build-common
+    runs-on: windows-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download cloak-windows.zip
+        run: >-
+          curl -Ljo cloak-windows.zip
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/cloak/cloak-v0.2.0-x86_64-pc-windows-msvc.zip
+      - name: unzip
+        run: Expand-Archive -Path cloak-windows.zip && mv cloak-windows/* ./ && ls
+      - name: clean
+        run: rm cloak-windows.zip && rm -r cloak-windows
+      - name: test-help
+        run: >-
+          if (.\cloak.exe -h | Select-String "A Command Line OTP")  { echo "ok"
+          } else { Write-Error "test-failed" }
+  test-on-linux-amd64:
+    name: test-on-linux-amd64
+    needs:
+      - build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download cloak-linux.tar.gz
+        run: >-
+          curl -Ljo cloak-linux.tar.gz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/cloak/cloak-v0.2.0-x86_64-unknown-linux-gnu.tar.gz
+      - name: unzip
+        run: >-
+          tar zxvf cloak-linux.tar.gz && mv
+          cloak-v0.2.0-x86_64-unknown-linux-gnu/* ./ && ls
+      - name: clean
+        run: rm cloak-linux.tar.gz && rm -r cloak-v0.2.0-x86_64-unknown-linux-gnu
+      - name: test-help
+        run: ./cloak -h | grep "A Command Line OTP"
+  test-on-macos-amd64:
+    name: test-on-macos-amd64
+    needs:
+      - build-common
+    runs-on: macos-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download cloak-macos.tar.gz
+        run: >-
+          curl -Ljo cloak-macos.tar.gz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/cloak/cloak-v0.2.0-x86_64-apple-darwin.tar.gz
+      - name: unzip
+        run: >-
+          tar zxvf cloak-macos.tar.gz && mv cloak-v0.2.0-x86_64-apple-darwin/*
+          ./ && ls
+      - name: clean
+        run: rm cloak-macos.tar.gz && rm -r cloak-v0.2.0-x86_64-apple-darwin
+      - name: test-help
+        run: ./cloak -h | grep "A Command Line OTP"
