@@ -1,0 +1,100 @@
+name: clash
+'on':
+  - push
+jobs:
+  build-common:
+    name: build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download clash-darwin-amd64-v1.10.0.gz
+        run: >-
+          curl -LjO 
+          https://github.com/Dreamacro/clash/releases/download/v1.10.0/clash-darwin-amd64-v1.10.0.gz
+      - name: Download clash-linux-amd64-v1.10.0.gz
+        run: >-
+          curl -LjO 
+          https://github.com/Dreamacro/clash/releases/download/v1.10.0/clash-linux-amd64-v1.10.0.gz
+      - name: Download clash-windows-amd64-v1.10.0.zip
+        run: >-
+          curl -LjO 
+          https://github.com/Dreamacro/clash/releases/download/v1.10.0/clash-windows-amd64-v1.10.0.zip
+      - name: ls
+        run: ls -alh
+      - name: Upload clash-darwin-amd64-v1.10.0.gz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: clash-darwin-amd64-v1.10.0.gz
+          asset_name: clash-darwin-amd64-v1.10.0.gz
+          tag: clash
+          overwrite: true
+      - name: Upload clash-linux-amd64-v1.10.0.gz
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: clash-linux-amd64-v1.10.0.gz
+          asset_name: clash-linux-amd64-v1.10.0.gz
+          tag: clash
+          overwrite: true
+      - name: Upload clash-windows-amd64-v1.10.0.zip
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: clash-windows-amd64-v1.10.0.zip
+          asset_name: clash-windows-amd64-v1.10.0.zip
+          tag: clash
+          overwrite: true
+  test-on-windows-amd64:
+    name: test-on-windows-amd64
+    needs:
+      - build-common
+    runs-on: windows-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download clash-windows.zip
+        run: >-
+          curl -Ljo clash-windows.zip
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/clash/clash-windows-amd64-v1.10.0.zip
+      - name: unzip
+        run: >-
+          Expand-Archive -Path clash-windows.zip && mv clash-windows/* ./ && mv
+          clash-windows-amd64.exe clash.exe && ls
+      - name: clean
+        run: rm clash-windows.zip && rm -r clash-windows
+      - name: test-help
+        run: .\clash.exe -h
+  test-on-linux-amd64:
+    name: test-on-linux-amd64
+    needs:
+      - build-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download clash-linux.gz
+        run: >-
+          curl -Ljo clash-linux.gz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/clash/clash-linux-amd64-v1.10.0.gz
+      - name: unzip
+        run: gzip -d clash-linux.gz && mv clash-linux clash && chmod +x clash && ls
+      - name: test-help
+        run: ./clash -h
+  test-on-macos-amd64:
+    name: test-on-macos-amd64
+    needs:
+      - build-common
+    runs-on: macos-latest
+    steps:
+      - name: prepare
+        uses: actions/checkout@v2
+      - name: Download clash-macos.gz
+        run: >-
+          curl -Ljo clash-macos.gz
+          https://github.com/orzorzorzorc/BuildArchive/releases/download/clash/clash-darwin-amd64-v1.10.0.gz
+      - name: unzip
+        run: gzip -d clash-macos.gz && mv clash-macos clash && chmod +x clash && ls
+      - name: test-help
+        run: ./clash -h
